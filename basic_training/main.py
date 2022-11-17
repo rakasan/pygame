@@ -13,6 +13,8 @@ char = pygame.image.load('basic_training/sprites/standing.png')
 clock = pygame.time.Clock()
 FPS = 27
 
+score = 0
+
 class enemy(object):
     walkRight = [pygame.image.load('basic_training/sprites/R1E.png'), pygame.image.load('basic_training/sprites/R2E.png'), pygame.image.load('basic_training/sprites/R3E.png'), pygame.image.load('basic_training/sprites/R4E.png'), pygame.image.load('basic_training/sprites/R5E.png'), pygame.image.load('basic_training/sprites/R6E.png'), pygame.image.load('basic_training/sprites/R7E.png'), pygame.image.load('basic_training/sprites/R8E.png'), pygame.image.load('basic_training/sprites/R9E.png')]
     walkLeft = [pygame.image.load('basic_training/sprites/L1E.png'), pygame.image.load('basic_training/sprites/L2E.png'), pygame.image.load('basic_training/sprites/L3E.png'), pygame.image.load('basic_training/sprites/L4E.png'), pygame.image.load('basic_training/sprites/L5E.png'), pygame.image.load('basic_training/sprites/L6E.png'), pygame.image.load('basic_training/sprites/L7E.png'), pygame.image.load('basic_training/sprites/L8E.png'), pygame.image.load('basic_training/sprites/L9E.png')]
@@ -27,20 +29,25 @@ class enemy(object):
         self.walkCount  = 0
         self.vel = 3
         self.hitbox = (self.x + 17,self.y+2,31,57)
+        self.health = 10
+        self.visible = True
 
     def draw(self,win):
         self.move()
-        if self.walkCount + 1  >= 24 :
-            self.walkCount = 0
+        if self.visible == True:
+            if self.walkCount + 1  >= 24 :
+                self.walkCount = 0
 
-        if self.vel > 0:
-            win.blit(self.walkRight[self.walkCount//3],(self.x,self.y))
-            self.walkCount+=1
-        else:
-            win.blit(self.walkLeft[self.walkCount//3],(self.x,self.y))
-            self.walkCount+=1
-        self.hitbox = (self.x + 17,self.y+2,31,57)
-        pygame.draw.rect(win,(255,0,0),self.hitbox,2)
+            if self.vel > 0:
+                win.blit(self.walkRight[self.walkCount//3],(self.x,self.y))
+                self.walkCount+=1
+            else:
+                win.blit(self.walkLeft[self.walkCount//3],(self.x,self.y))
+                self.walkCount+=1
+            pygame.draw.rect(win,(255,0,0),(self.hitbox[0] - 10,self.hitbox[1] - 20,50,10))
+            pygame.draw.rect(win,(0,128,0),(self.hitbox[0] - 10,self.hitbox[1] - 20,50 - ((50 / 10) * (10 - self.health)),10))
+            self.hitbox = (self.x + 17,self.y+2,31,57)
+       # pygame.draw.rect(win,(255,0,0),self.hitbox,2)
         
     
     def move(self):
@@ -58,6 +65,11 @@ class enemy(object):
                 self.walkCount = 0  
 
     def hit(self):
+        if self.health > 1:
+            self.health -=1
+        else:
+            self.visible = False
+        
         print('hit')
            
         
@@ -93,7 +105,7 @@ class player(object):
             else:
                 win.blit(walkLeft[0],(self.x,self.y))
         self.hitbox = (self.x + 17,self.y+11,29,52)
-        pygame.draw.rect(win,(255,0,0),self.hitbox,2)
+      #  pygame.draw.rect(win,(255,0,0),self.hitbox,2)
 
 class projectile(object):
     def __init__(self,x,y,radius,color,facing):
@@ -109,6 +121,8 @@ class projectile(object):
 
 def redrawGameWindow():
     win.blit(bg,(0,0))   
+    text = font.render('Score ' + str(score),1,(0,0,0))
+    win.blit(text,(360,10))
     goblin.draw(win)
     man.draw(win)
     for bullet in bullets:
@@ -116,6 +130,7 @@ def redrawGameWindow():
     pygame.display.update()
 
 #mainloop
+font = pygame.font.SysFont("comicsans",25,True,True)
 man = player(300,410,64,64)
 goblin = enemy(100,410,64,64,450)
 shootLoop = 0
@@ -134,6 +149,7 @@ while run:
         if bullet.y - bullet.radius < goblin.hitbox[1] + goblin.hitbox[3] and bullet.y + bullet.radius > goblin.hitbox[1]:
             if bullet.x + bullet.radius > goblin.hitbox[0] and bullet.x - bullet.radius  < goblin.hitbox[0] + goblin.hitbox[3]:
                 goblin.hit()
+                score +=1
                 bullets.pop(bullets.index(bullet))
 
         if bullet.x < 500 and bullet.x > 0:
