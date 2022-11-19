@@ -3,6 +3,7 @@ from pygame.locals import *
 import os
 import sys
 import math
+import random
 
 pygame.init()
 
@@ -67,15 +68,49 @@ def redrawWindow():
     win.blit(bg,(bgX,0))
     win.blit(bg,(bgX2,0))
     runner.draw(win)
+    for objectt  in objects:
+        objectt.draw(win)
     pygame.display.update()
+
+class saw(object):
+    img = [pygame.image.load(os.path.join('side_scroller/images', 'SAW0.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW1.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW2.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW3.png'))]
+    def __init__(self,x,y,width,height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.heigh = height
+        self.hitbox = (x,y,width,height)
+        self.count = 0
+
+    def draw(self, win):
+        self.hitbox  = (self.x + 5,self.y + 5,self.width -10, self.heigh)
+        if self.count >= 8:
+            self.count = 0
+        win.blit(pygame.transform.scale(self.img[self.count//2],(64,64)),(self.x,self.y) )
+        self.count +=1
+        pygame.draw.rect(win,(255,0,0),self.hitbox,2)
+
+class spike(saw):
+    img = pygame.image.load(os.path.join('side_scroller/images', 'spike.png'))
+    def draw(self, win):
+        self.hitbox = (self.x + 10,self.y,28,315)
+        win.blit(self.img,(self.x,self.y))
+        pygame.draw.rect(win,(255,0,0),self.hitbox,2)
 
 
 runner = player(200,313,64,64)
 pygame.time.set_timer(USEREVENT+1,500)
+pygame.time.set_timer(USEREVENT+2,random.randrange(3000,5000))
 speed = 30
+objects = []
 run = True
 while run:
     redrawWindow()
+
+    for objectt in objects:
+        objectt.x -= 1.4
+        if objectt.x < objectt.width * -1:
+            objects.pop(objects.index(objectt))
     bgX -= 1.4
     bgX2 -= 1.4
     if bgX < bg.get_width() * -1:
@@ -89,6 +124,14 @@ while run:
             quit()
         if event.type == pygame.USEREVENT+1:
             speed+=1
+        if event.type == pygame.USEREVENT+2:
+            r = random.randrange(0,2)
+            if r == 0:
+                objects.append(saw(810,310,64,64))
+            else :
+                objects.append(spike(810,310,48,320))
+
+        
     keys = pygame.key.get_pressed()
 
     if(keys[pygame.K_SPACE] or keys[pygame.K_UP]):
