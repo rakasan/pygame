@@ -21,6 +21,7 @@ class player(object):
     run = [pygame.image.load(os.path.join('side_scroller/images', str(x) + '.png')) for x in range(8,16)]
     jump = [pygame.image.load(os.path.join('side_scroller/images', str(x) + '.png')) for x in range(1,8)]
     slide = [pygame.image.load(os.path.join('side_scroller/images', 'S1.png')),pygame.image.load(os.path.join('side_scroller/images', 'S2.png')),pygame.image.load(os.path.join('side_scroller/images', 'S2.png')),pygame.image.load(os.path.join('side_scroller/images', 'S2.png')), pygame.image.load(os.path.join('side_scroller/images', 'S2.png')),pygame.image.load(os.path.join('side_scroller/images', 'S2.png')), pygame.image.load(os.path.join('side_scroller/images', 'S2.png')), pygame.image.load(os.path.join('side_scroller/images', 'S2.png')), pygame.image.load(os.path.join('side_scroller/images', 'S3.png')), pygame.image.load(os.path.join('side_scroller/images', 'S4.png')), pygame.image.load(os.path.join('side_scroller/images', 'S5.png'))]
+    fall = pygame.image.load(os.path.join('side_scroller/images', '0.png'))
     jumpList = [1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4]
     def __init__(self, x, y, width, height):
         self.x = x
@@ -33,6 +34,7 @@ class player(object):
         self.jumpCount = 0
         self.runCount = 0
         self.slideUp = False
+        self.falling = False
 
     def draw(self, win):
         if self.jumping:
@@ -43,6 +45,7 @@ class player(object):
                 self.jumpCount = 0
                 self.jumping = False
                 self.runCount = 0
+            self.hitbox = (self.x + 4,self.y,self.width - 24,self.height - 10)
         elif self.sliding or self.slideUp:
             if self.slideCount < 20:
                 self.y += 1
@@ -50,18 +53,24 @@ class player(object):
                 self.y -= 19
                 self.sliding = False
                 self.slideUp = True
+            elif self.slideCount > 20 and self.slideCount < 80:
+                self.hitbox = (self.x,self.y + 3,self.width - 8,self.height - 35)
             if self.slideCount >= 110:
                 self.slideCount = 0
                 self.slideUp = False
                 self.runCount = 0
+                self.hitbox = (self.x + 4,self.y,self.width - 24,self.height - 10)
             win.blit(self.slide[self.slideCount//10], (self.x,self.y))
             self.slideCount += 1
-            
+        elif self.falling:
+            win.blit(self.fall,(self.x,self.y + 30))
         else:
             if self.runCount > 42:
                 self.runCount = 0
             win.blit(self.run[self.runCount//6], (self.x,self.y))
             self.runCount += 1
+            self.hitbox = (self.x + 4,self.y,self.width - 24, self.height-13)
+        pygame.draw.rect(win,(255,0,0),self.hitbox,2)
 
 
 def redrawWindow():
@@ -71,6 +80,9 @@ def redrawWindow():
     for objectt  in objects:
         objectt.draw(win)
     pygame.display.update()
+
+def reset():
+    pass
 
 class saw(object):
     img = [pygame.image.load(os.path.join('side_scroller/images', 'SAW0.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW1.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW2.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW3.png'))]
@@ -89,6 +101,12 @@ class saw(object):
         win.blit(pygame.transform.scale(self.img[self.count//2],(64,64)),(self.x,self.y) )
         self.count +=1
         pygame.draw.rect(win,(255,0,0),self.hitbox,2)
+    
+    def collide(self,rect):
+        if rect[0] + rect[2] > self.hitbox[0] and rect[0] < self.hitbox[0] + self.hitbox[2]:
+            if rect[1] + rect[3] > self.hitbox[1] : 
+                return True
+        return False
 
 class spike(saw):
     img = pygame.image.load(os.path.join('side_scroller/images', 'spike.png'))
@@ -96,6 +114,12 @@ class spike(saw):
         self.hitbox = (self.x + 10,self.y,28,315)
         win.blit(self.img,(self.x,self.y))
         pygame.draw.rect(win,(255,0,0),self.hitbox,2)
+    
+    def collide(self,rect):
+        if rect[0] + rect[2] > self.hitbox[0] and rect[0] < self.hitbox[0] + self.hitbox[2]:
+            if rect[1] < self.hitbox[1] : 
+                return True
+        return False
 
 
 runner = player(200,313,64,64)
@@ -108,6 +132,9 @@ while run:
     redrawWindow()
 
     for objectt in objects:
+        if objectt.collide(runner.hitbox):
+            runner.falling = True
+            pygame.time.delay(1000)
         objectt.x -= 1.4
         if objectt.x < objectt.width * -1:
             objects.pop(objects.index(objectt))
