@@ -37,7 +37,9 @@ class player(object):
         self.falling = False
 
     def draw(self, win):
-        if self.jumping:
+        if self.falling:
+            win.blit(self.fall,(self.x,self.y + 30))
+        elif self.jumping:
             self.y -= self.jumpList[self.jumpCount] * 1.2
             win.blit(self.jump[self.jumpCount//18], (self.x,self.y))
             self.jumpCount += 1
@@ -62,14 +64,13 @@ class player(object):
                 self.hitbox = (self.x + 4,self.y,self.width - 24,self.height - 10)
             win.blit(self.slide[self.slideCount//10], (self.x,self.y))
             self.slideCount += 1
-        elif self.falling:
-            win.blit(self.fall,(self.x,self.y + 30))
+
         else:
             if self.runCount > 42:
                 self.runCount = 0
             win.blit(self.run[self.runCount//6], (self.x,self.y))
             self.runCount += 1
-            self.hitbox = (self.x + 4,self.y,self.width - 24, self.height-13)
+            self.hitbox = (self.x + 4,self.y,self.width - 24, self.height-10)
         pygame.draw.rect(win,(255,0,0),self.hitbox,2)
 
 
@@ -81,8 +82,26 @@ def redrawWindow():
         objectt.draw(win)
     pygame.display.update()
 
-def reset():
-    pass
+def endScreen():
+    global pause,objects,speed
+    pause = 0
+    objects = []
+    speed = 0
+    run = True
+    while run:
+        pygame.time.delay(100)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                run = False
+        win.blit(bg,(0,0))
+        large_font = pygame.font.SysFont('commicsans',80)
+        previous_score = large_font.render('Previous score',1,(255,255,255))
+        win.blit(previous_score,(W/2 - previous_score.get_width()/2),200)
+        new_score = large_font.render('Previous score',1,(255,255,255))
+        win.blit(new_score,(W/2 - new_score.get_width()/2),320)
 
 class saw(object):
     img = [pygame.image.load(os.path.join('side_scroller/images', 'SAW0.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW1.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW2.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW3.png'))]
@@ -126,15 +145,22 @@ runner = player(200,313,64,64)
 pygame.time.set_timer(USEREVENT+1,500)
 pygame.time.set_timer(USEREVENT+2,random.randrange(3000,5000))
 speed = 30
+pause = 0
+fallSpeed = 0
 objects = []
 run = True
 while run:
-    redrawWindow()
+    if pause >0:
+        pause +=1
+        if pause > fallSpeed * 2:
+            endScreen()
 
     for objectt in objects:
         if objectt.collide(runner.hitbox):
             runner.falling = True
-            pygame.time.delay(1000)
+            if pause == 0:
+                fallSpeed = speed
+                pause =1
         objectt.x -= 1.4
         if objectt.x < objectt.width * -1:
             objects.pop(objects.index(objectt))
@@ -168,4 +194,5 @@ while run:
         if not (runner.sliding):
             runner.sliding = True
     clock.tick(speed)
+    redrawWindow()
     
