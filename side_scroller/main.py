@@ -80,10 +80,26 @@ def redrawWindow():
     runner.draw(win)
     for objectt  in objects:
         objectt.draw(win)
+    font = pygame.font.SysFont('comicsans',30)
+    text = font.render('Score: ' + str(score),1,(255,255,255))
+    win.blit(text,(600,10))
     pygame.display.update()
 
+def updateFile():
+    f = open('side_scroller/score.txt','r')
+    file = f.readlines()
+    last = int(file[0])
+    if last < int(score):
+        f.close()
+        file=open('side_scroller/score.txt','w')
+        file.write(str(score))
+        file.close()
+        return score
+    return last
+
+
 def endScreen():
-    global pause,objects,speed
+    global pause,objects,speed,score
     pause = 0
     objects = []
     speed = 0
@@ -98,10 +114,13 @@ def endScreen():
                 run = False
         win.blit(bg,(0,0))
         large_font = pygame.font.SysFont('commicsans',80)
-        previous_score = large_font.render('Previous score',1,(255,255,255))
-        win.blit(previous_score,(W/2 - previous_score.get_width()/2),200)
-        new_score = large_font.render('Previous score',1,(255,255,255))
-        win.blit(new_score,(W/2 - new_score.get_width()/2),320)
+        previous_score = large_font.render('Previous score: ' + str(updateFile()),1,(255,255,255))
+        win.blit(previous_score,((W/2 - previous_score.get_width()/2),150))
+        new_score = large_font.render('Score' + str(score),1,(255,255,255))
+        win.blit(new_score,((W/2 - new_score.get_width()/2),320))
+        pygame.display.update()
+    score = 0
+    runner.falling = False
 
 class saw(object):
     img = [pygame.image.load(os.path.join('side_scroller/images', 'SAW0.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW1.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW2.png')),pygame.image.load(os.path.join('side_scroller/images', 'SAW3.png'))]
@@ -150,6 +169,7 @@ fallSpeed = 0
 objects = []
 run = True
 while run:
+    score = speed//5 - 6
     if pause >0:
         pause +=1
         if pause > fallSpeed * 2:
@@ -182,7 +202,7 @@ while run:
             if r == 0:
                 objects.append(saw(810,310,64,64))
             else :
-                objects.append(spike(810,310,48,320))
+                objects.append(spike(810,0,48,320))
 
         
     keys = pygame.key.get_pressed()
