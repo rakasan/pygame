@@ -19,5 +19,5 @@ tim.forward(100)
 dave = turtle.Turtle()
 dave.color('blue')
 dave.pensize(20)
-
+dave.speed(1)
 dave.backward(100)
